@@ -1,0 +1,2701 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Hope Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #ff4d6d;
+            --accent-glow: rgba(255, 77, 109, 0.4);
+            --bg-dark: #0a0a0c;
+            --locked: #7400b8;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 77, 109, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(116, 0, 184, 0.05) 0%, transparent 40%);
+            color: #ffffff;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+
+#custom-prompt {
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 9999; 
+    background: rgba(10, 10, 12, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    
+    /* Simplificăm centrarea orizontală */
+    overflow-y: auto; /* Permite scroll dacă ecranul e foarte mic */
+}
+
+.modal-content {
+    background: #1a1a1c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 30px;
+    width: 280px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+
+    /* --- AJUSTARE POZIȚIE --- */
+    margin: 80px auto; /* 80px de sus, 'auto' centrează stânga-dreapta */
+}
+
+
+
+.pin-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--locked);
+    font-weight: 800;
+    margin-bottom: 5px;
+    display: block;
+}
+
+
+
+
+.text-locked {
+    filter: blur(6px);
+    user-select: none;         /* Previne selectarea textului */
+    pointer-events: none;      /* Previne click/dreapta pe el */
+    -webkit-user-select: none; /* Safari */
+}
+
+
+.hope-title { 
+    font-family: 'Dancing Script', cursive;
+    font-size: 3.9rem; /* Ajustat pentru a se potrivi în layout */
+    margin: 0; 
+    background: linear-gradient(45deg, #c9184a, #ff4d6d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.1);
+    animation: floatTitle 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes floatTitle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+
+
+
+
+.search-container {
+    margin-top: 20px; 
+    padding: 0 25px !important; 
+    height: 48px; 
+    display: flex !important; /* Forțează layout de tip rând */
+    flex-direction: row !important; /* Elementele stau unul lângă altul, nu sub altul */
+    align-items: center !important; /* Aliniere verticală perfectă */
+    gap: 12px;
+    border-radius: 50px !important;
+    min-height: unset !important;
+}
+
+/* Ne asigurăm că input-ul nu are margini care să îl împingă */
+#search-input {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: normal !important;
+}
+
+
+
+
+/* MODIFICĂ ACEST BLOC ÎN CSS */
+#radio-popup {
+    position: fixed;
+    top: 20px; /* Sau bottom: 20px conform media query-ului tău */
+    left: 20px;
+    z-index: 1000;
+    background: transparent !important; /* FORȚEAZĂ TRANSPARENȚA */
+    border: none !important;           /* SCOATE BORDURA */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: none !important;      /* SCOATE UMBRA DREPTUNGHIULARĂ */
+}
+
+
+        .radio-title {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        /* HUD PUNCTE */
+        #points-hud {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(20, 20, 22, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 12px 20px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+/* În secțiunea <style> */
+#points-hud .val {
+    font-size: 1.75rem; /* Era 1.4rem */
+    font-weight: 700;
+    background: linear-gradient(to right, #fff, #ffb3c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+
+/* --- GRID & CARDS LUXURY LAYOUT --- */
+.app-container { width: 100%; max-width: 900px; margin-top: 10px; }
+
+.grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 20px; 
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 32px;
+    padding: 24px;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 77, 109, 0.3);
+}
+
+/* Containerul tip "Rând" pentru Icon + Text */
+.card-header-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* Iconița în stilul istoricului */
+.c-icon {
+    width: 54px;
+    height: 54px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.c-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Butoanele noi */
+.btn-love {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    padding: 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: 0.3s;
+}
+
+.btn-love:hover {
+    background: #fff;
+    color: #000;
+}
+
+.btn-premium {
+    background: var(--accent);
+    border: none;
+    color: white;
+    padding: 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    box-shadow: 0 8px 20px var(--accent-glow);
+    transition: 0.3s;
+}
+
+.price-tag { 
+    font-size: 0.65rem; 
+    font-weight: 800; 
+    color: var(--accent); 
+    background: rgba(255, 77, 109, 0.1); 
+    padding: 4px 10px; 
+    border-radius: 10px;
+    align-self: flex-start;
+}
+
+
+/* Stil pentru butoane când creditele sunt insuficiente */
+button:disabled {
+    opacity: 0.4;
+    filter: grayscale(0.8);
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Opțional: Adaugă un mic indicator vizual pe preț dacă e prea mare */
+.price-tag.too-expensive {
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff4d6d;
+    border: 1px solid rgba(255, 77, 109, 0.3);
+}
+
+
+
+
+
+/* REPARAȚIE ETICHETE SECȚIUNI */
+.section-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--accent);
+    font-weight: 800;
+    margin: 40px 0 20px 10px; /* Spațiere generoasă sus și puțin jos */
+    display: block;
+    opacity: 0.9;
+    position: relative;
+    padding-left: 15px;
+}
+
+.section-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 10px;
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Stil special pentru Private Vault când e locked */
+#private-label {
+    color: var(--locked);
+}
+#private-label::before {
+    background: var(--locked);
+    box-shadow: 0 0 8px rgba(116, 0, 184, 0.4);
+}
+
+
+
+/* DESIGN NOU BUTON "VEZI TOT" */
+.btn-expand-luxury {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 30px auto;
+    padding: 12px 28px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 100px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-expand-luxury:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--accent);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-expand-luxury:active {
+    transform: scale(0.95);
+}
+
+/* Iconița de săgeată */
+.expand-icon {
+    transition: transform 0.4s ease;
+    display: flex;
+    align-items: center;
+}
+
+/* Clasa aplicată prin JS când secțiunea e deschisă */
+.btn-expand-luxury.active {
+    background: rgba(255, 77, 109, 0.1);
+    border-color: rgba(255, 77, 109, 0.3);
+    color: var(--accent);
+}
+
+.btn-expand-luxury.active .expand-icon {
+    transform: rotate(180deg);
+}
+
+/* Badge-ul cu numărul de iteme ascunse */
+.expand-count {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    margin-left: 4px;
+}
+
+
+
+
+
+
+
+
+
+
+        /* ISTORIC */
+        .history-list { list-style: none; padding: 0; margin-top: 20px; }
+        .history-item { 
+            background: rgba(255,255,255,0.02); 
+            margin-bottom: 8px; 
+            padding: 12px 20px; 
+            border-radius: 15px; 
+            font-size: 0.85rem; 
+            display: flex; 
+            justify-content: space-between;
+            border: 1px solid var(--glass-border);
+        }
+
+.locked-overlay {
+    position: relative;
+    overflow: hidden;
+    padding: 80px 30px;
+    border-radius: 40px;
+    background: rgba(20, 20, 25, 0.4);
+    border: 1px solid rgba(116, 0, 184, 0.2);
+    
+    /* ASIGURĂ CENTRAREA PERFECTĂ */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100%;
+    box-sizing: border-box;
+
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    z-index: 1;
+}
+
+
+/* Efectul de aura mov din spatele scutului */
+.locked-overlay::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    background: var(--locked);
+    filter: blur(60px);
+    opacity: 0.25;
+    z-index: -1;
+    transition: 0.6s;
+    pointer-events: none;
+}
+
+/* EFECTUL DE SCANARE LUXURY (Dunga de lumină) */
+.locked-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%; 
+    width: 70%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 255, 255, 0) 10%,
+        rgba(255, 255, 255, 0.15) 50%, 
+        rgba(255, 255, 255, 0) 90%,
+        transparent 100%
+    );
+    transform: skewX(-25deg);
+    pointer-events: none;
+    z-index: 3;
+    /* 4s = durata totala (miscare + pauza). Modifica aici pentru viteza generala */
+    animation: luxury-scan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes luxury-scan {
+    0% { left: -110%; opacity: 0; }
+    10% { opacity: 1; }
+    40% { left: 150%; opacity: 1; } /* Dunga trece peste card pana la 40% din timp */
+    50%, 100% { left: 150%; opacity: 0; } /* Ramane ascunsa restul timpului (pauza) */
+}
+
+/* SCUTUL ROMBOIDAL (HEX SHIELD) CU BORDURI MOV */
+.lock-icon-container {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 25px;
+}
+
+.hex-shield {
+    width: 90px;
+    height: 90px;
+    background: rgba(116, 0, 184, 0.1); /* Fundal mov foarte stins */
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--locked); /* BORDURA MOV */
+    border-radius: 24px;
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.5s;
+    /* Glow mov exterior pe bordura */
+    box-shadow: 0 0 15px rgba(116, 0, 184, 0.4), 0 15px 35px rgba(0,0,0,0.5);
+}
+
+.hex-shield svg {
+    transform: rotate(-45deg);
+    filter: drop-shadow(0 0 10px var(--locked));
+    stroke: #b172ff; /* Culoare iconita mov deschis */
+}
+
+/* Efect la Hover */
+.locked-overlay:hover .hex-shield {
+    transform: rotate(45deg) scale(1.1);
+    border-color: #b172ff; /* Bordura se aprinde la atingere */
+    background: rgba(116, 0, 184, 0.2);
+    box-shadow: 0 0 25px rgba(116, 0, 184, 0.6), 0 15px 40px rgba(0,0,0,0.6);
+}
+
+/* TEXTUL SI BADGE-UL */
+.lock-title-elite {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.lock-title-elite h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    background: linear-gradient(to bottom, #fff, rgba(255,255,255,0.5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.lock-badge {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 6px 15px;
+    background: rgba(116, 0, 184, 0.15);
+    border: 1px solid rgba(116, 0, 184, 0.3);
+    border-radius: 100px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #b172ff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    backdrop-filter: blur(5px);
+}
+
+
+
+
+
+
+@media (max-width: 600px) {
+    #radio-popup { 
+        top: auto; 
+        bottom: 20px; 
+        left: 20px; 
+    }
+    #points-hud { 
+        top: auto; 
+        bottom: 20px; 
+        right: 20px; 
+    }
+    /* Opțional: Poți mări padding-ul doar pe mobil dacă e nevoie */
+    body {
+        padding-bottom: 100px;
+    }
+}
+
+
+/* Containerul butonului - acum vizibil când e oprit */
+#play-indicator {
+    width: 46px; /* Mărit cu 25% (de la 45px) */
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+
+/* Starea OPRIT: Efect de sticlă mată discretă */
+.radio-off {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Starea PORNIT: Culoarea de accent și pregătirea stratului de sub */
+.radio-on {
+    background: var(--accent) !important;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Stratul de "respirație" care apare doar când e ON */
+.radio-on::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--accent);
+    border-radius: 50%;
+    z-index: -1;
+    animation: breathing-layer 4s ease-in-out infinite;
+}
+
+/* Animația de respirație: doar fundalul se mișcă */
+@keyframes breathing-layer {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 15px 2px rgba(255, 77, 109, 0.4);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.15); /* Doar halo-ul se extinde */
+        box-shadow: 0 0 25px 8px rgba(255, 77, 109, 0.5);
+        opacity: 0.6;
+    }
+}
+
+/* Fixăm iconițele să nu se mărească */
+#play-indicator svg {
+    position: relative;
+    z-index: 3;
+    width: 25px; /* Mărit cu 25% */
+    height: 25px;
+}
+
+
+
+
+
+
+
+#radio-popup:active #play-indicator {
+    transform: scale(0.9);
+}
+
+
+
+
+
+#streak-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.streak-content.vertical-layout {
+    background: linear-gradient(145deg, #1e1e22, #121214);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 95%;
+    max-width: 340px; /* Lățimea optimă cerută */
+    border-radius: 32px;
+    padding: 24px;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 15px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    position: relative;
+}
+
+.streak-info-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.streak-header-mini h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin: 5px 0;
+    color: #fff;
+    letter-spacing: -1px;
+}
+
+.streak-header-mini p {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.next-reward-box {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 20px 0;
+    min-height: 110px;
+}
+
+.next-reward-box .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #00d4ff;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.countdown-timer {
+    font-size: 0.85rem;
+    color: #efefef;
+    line-height: 1.5;
+}
+
+.btn-close-streak-mini {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 14px;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+/* Stiluri Timeline */
+.streak-timeline-side {
+    width: 45px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.timeline-v-track {
+    position: absolute;
+    top: 20px; height: 280px; width: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+#timeline-fill-v {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 0%;
+    background: linear-gradient(to bottom, #00d4ff, #7400b8);
+    border-radius: 10px;
+    transition: height 1.5s ease;
+}
+
+.steps-v-wrapper {
+    position: relative;
+    display: flex; flex-direction: column; 
+    justify-content: space-between; 
+    height: 320px; z-index: 2;
+}
+
+.step-v { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+.dot-v {
+    width: 10px; height: 10px;
+    background: #1e1e22; border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.lbl-v { font-size: 0.6rem; font-weight: 700; color: rgba(255, 255, 255, 0.2); }
+
+.step-v.reached .dot-v { background: #00d4ff; border-color: #fff; box-shadow: 0 0 10px #00d4ff; }
+.step-v.reached .lbl-v { color: #fff; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+.key-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 15px;
+    border-radius: 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.05s linear; /* Tranzitie ultra-rapidă */
+    -webkit-tap-highlight-color: transparent;
+    
+    /* ACEASTA ESTE LINIA CHEIE */
+    touch-action: manipulation; 
+    user-select: none;
+}
+
+.key-btn:active {
+    background: var(--locked);
+    transform: scale(0.9); /* Feedback vizual instant */
+}
+
+
+#pw-display span.filled {
+    -webkit-text-security: disc; /* Transformă cifrele în puncte */
+}
+
+
+@keyframes pulse-special {
+    0% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 77, 109, 0.2); }
+    50% { transform: scale(1.009); box-shadow: 0 0 25px rgba(255, 77, 109, 0.4); }
+    100% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 77, 109, 0.2); }
+}
+
+
+/* Containerul Principal - Buton Reset Circular */
+#reset-circle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    z-index: 999999 !important; /* Prioritate maximă peste orice element */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Design Glassmorphism */
+    background: rgba(25, 25, 30, 0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    
+    /* Culoare Iconiță (Rozul tău de accent) */
+    color: rgba(255, 179, 193, 0.9);
+    
+    /* FIX PENTRU REACȚIE INSTANTANEE */
+    cursor: pointer;
+    touch-action: manipulation; /* Ignoră gesturile de scroll pe acest element */
+    user-select: none; /* Previne selectarea textului la apăsări rapide */
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent; /* Elimină flash-ul gri de sistem la atingere */
+    
+    /* Tranziție lină pentru revenirea din starea de glow */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Iconița SVG */
+#reset-circle svg {
+    display: block;
+    pointer-events: none; /* Asigură că atingerea trece prin SVG direct la container */
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* EFECTUL DE GLOW (Activat prin JS timp de 1 secundă) */
+.glow-active {
+    background: var(--accent) !important; /* Roz plin la apăsare */
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 0 30px var(--accent-glow), 0 0 10px var(--accent) !important;
+    transform: scale(1.1);
+}
+
+/* Rotația iconiței în timpul strălucirii */
+.glow-active svg {
+    transform: rotate(-180deg);
+}
+
+/* COMPORTAMENT DESKTOP (Hover) */
+@media (hover: hover) {
+    #reset-circle:hover:not(.glow-active) {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+    
+    #reset-circle:hover svg {
+        transform: rotate(-45deg);
+    }
+}
+
+/* FEEDBACK INSTANT LA APĂSARE (Atingere Fizică) */
+#reset-circle:active {
+    transform: scale(0.9);
+    transition: 0.1s;
+}
+
+/* ADAPTARE MOBIL (Deasupra HUD-ului cu credite) */
+@media (max-width: 600px) {
+    #reset-circle {
+        top: auto;
+        bottom: 85px; /* Aliniat perfect deasupra capsulei HUD din josul paginii */
+        right: 20px;
+        width: 46px;
+        height: 46px;
+        /* Opacitate mai mare pe mobil pentru a nu se pierde în fundalul paginii */
+        background: rgba(15, 15, 20, 0.85);
+    }
+}
+
+
+.hidden-reset {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: scale(0.8) !important;
+}
+
+
+
+/* CONTAINER ISTORIC */
+#history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 5px 0;
+}
+
+/* CARD INDIVIDUAL */
+.history-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(4px);
+    border-color: rgba(255, 77, 109, 0.3);
+}
+
+/* Dungă decorativă laterală */
+.history-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Partea stângă: Icon + Text */
+.h-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.h-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.h-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.h-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.2px;
+}
+
+.h-time {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+/* Partea dreaptă: Data */
+.h-date {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.h-day {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--accent);
+    opacity: 0.9;
+}
+
+/* Beneficii Private (Locked) */
+.history-item.is-private-locked {
+    background: rgba(116, 0, 184, 0.04);
+    border-color: rgba(116, 0, 184, 0.1);
+}
+
+.history-item.is-private-locked::before {
+    background: var(--locked);
+    box-shadow: 0 0 10px rgba(116, 0, 184, 0.5);
+}
+
+.text-locked {
+    filter: blur(5px);
+    opacity: 0.5;
+    user-select: none;
+}
+
+
+
+/* Stil pentru butonul de anulare din seif */
+.btn-glass-cancel {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    padding: 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.btn-glass-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-glass-cancel:active {
+    transform: scale(0.98);
+}
+
+
+
+
+
+#toast-notification {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    /* Folosim translate3d pentru accelerare hardware și stabilitate la centrare */
+    transform: translate3d(-50%, 0, 0) scale(0.5);
+    
+    background: rgba(20, 20, 22, 0.7) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    
+    /* Păstrăm lățimea fixă la început pentru a ancora centrul perfect */
+    width: 190px;
+    height: 35px;
+    border-radius: 50px;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 15px;
+    
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100000;
+    overflow: hidden;
+    
+    /* Tranziția ta originală, aplicată unitar */
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#toast-notification.show {
+    opacity: 1;
+    /* Menținem lățimea fixă pentru a elimina balansul stânga-dreapta */
+    width: 170px; 
+    height: 55px;
+    transform: translate3d(-50%, 0, 0) scale(1);
+    gap: 12px;
+    pointer-events: auto;
+}
+
+/* Dacă textul e prea lung, adăugăm o protecție să nu strice centrarea */
+.toast-main-island {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px; /* Ajustează în funcție de cât spațiu vrei să ocupe textul */
+}
+
+.toast-text-island {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(-10px);
+    /* Revenim la delay-ul tău original pentru text */
+    transition: all 0.4s ease 0.2s;
+}
+
+#toast-notification.show .toast-text-island {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+
+
+
+.toast-icon-island {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05); /* Mai discret pe fundalul glass */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+
+
+.toast-main-island {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #ffffff;
+    /* Forțăm textul pe un singur rând */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+
+
+
+
+.toast-sub-island {
+    font-size: 0.65rem;
+    color: #8e8e93;
+}
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+
+
+<div id="toast-notification">
+    <div class="toast-icon-island" id="island-icon">✨</div>
+    <div class="toast-text-island">
+        <span class="toast-main-island" id="island-title">Cerere Trimisă</span>
+        <span class="toast-sub-island">Se procesează magia...</span>
+    </div>
+</div>
+
+
+
+
+
+
+<div id="reset-circle" onpointerdown="resetApp()" title="Resetare">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6"></path>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </svg>
+</div>
+
+
+
+
+
+
+
+
+
+<div id="custom-prompt">
+    <div class="glass-card modal-content" style="width: 300px; padding: 25px;">
+        <span class="pin-label">Vault Security</span>
+        <h2 style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #fff;">Introdu codul</h2>
+        
+        <!-- Display pentru cod (fără tastatură) -->
+        <div id="pw-display" style="width:100%; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 2rem; letter-spacing: 15px; color: white; background: rgba(0,0,0,0.3); border: 1px solid var(--locked); border-radius: 20px; margin: 20px 0;">
+            <span style="opacity: 0.3;">••••</span>
+        </div>
+
+<div class="keypad-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+    <button class="key-btn" onpointerdown="pressKey('1', event)">1</button>
+    <button class="key-btn" onpointerdown="pressKey('2', event)">2</button>
+    <button class="key-btn" onpointerdown="pressKey('3', event)">3</button>
+    
+    <button class="key-btn" onpointerdown="pressKey('4', event)">4</button>
+    <button class="key-btn" onpointerdown="pressKey('5', event)">5</button>
+    <button class="key-btn" onpointerdown="pressKey('6', event)">6</button>
+    
+    <button class="key-btn" onpointerdown="pressKey('7', event)">7</button>
+    <button class="key-btn" onpointerdown="pressKey('8', event)">8</button>
+    <button class="key-btn" onpointerdown="pressKey('9', event)">9</button>
+    
+    <button class="key-btn" onpointerdown="clearKey(event)" style="color: var(--accent);">C</button>
+    <button class="key-btn" onpointerdown="pressKey('0', event)">0</button>
+    <button class="key-btn" onpointerdown="backspaceKey(event)">⌫</button>
+</div>
+
+
+
+<button class="btn-glass-cancel" onclick="closeSecretModal()">
+    Anulează
+</button>
+    </div>
+</div>
+
+
+
+
+<div id="streak-modal" onclick="closeStreakModal()" style="display: none;">
+    <div class="streak-content vertical-layout" onclick="event.stopPropagation()">
+        
+        <!-- Partea Stângă: Informații și Mesaje -->
+        <div class="streak-info-side">
+<div class="streak-header-mini" style="text-align: left;">
+    <!-- FOC ANIMAT ALINIAT NATURAL -->
+    <img src="https://github.com/markyz1337/only-me/raw/refs/heads/main/animated_emojis/A37.GIF" 
+         width="50" 
+         height="50" 
+         style="margin-bottom: 5px; filter: drop-shadow(0 0 10px rgba(255, 77, 109, 0.3));">
+    
+    <h2 id="streak-title-display" style="margin: 0; font-size: 2rem; font-weight: 900; line-height: 1.1;">0 Zile</h2>
+    <p style="margin: 2px 0 0 0; font-size: 0.65rem; letter-spacing: 2px; color: var(--accent); font-weight: 800; text-transform: uppercase;">
+        Streak Activ
+    </p>
+</div>
+
+
+            
+            <div class="next-reward-box">
+                <span class="label">Status Recompensă</span>
+                <div class="countdown-timer" id="next-goal-hint">Se încarcă magia...</div>
+            </div>
+
+            <button class="btn-close-streak-mini" onclick="closeStreakModal()">
+                ÎNCHIDE
+            </button>
+        </div>
+
+        <!-- Partea Dreaptă: Timeline Vertical -->
+        <div class="streak-timeline-side">
+            <div class="timeline-v-track">
+                <div id="timeline-fill-v"></div>
+            </div>
+            
+            <div class="steps-v-wrapper">
+                <div class="step-v" id="step-7"><div class="dot-v"></div><span class="lbl-v">7z</span></div>
+                <div class="step-v" id="step-30"><div class="dot-v"></div><span class="lbl-v">30z</span></div>
+                <div class="step-v" id="step-90"><div class="dot-v"></div><span class="lbl-v">90z</span></div>
+                <div class="step-v" id="step-180"><div class="dot-v"></div><span class="lbl-v">180z</span></div>
+                <div class="step-v" id="step-365"><div class="dot-v"></div><span class="lbl-v">365z</span></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+<!-- MODAL CONFIRMARE CUSTOM -->
+<div id="confirm-modal" style="display: none !important; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+    
+    <div class="glass-card" style="width: 100%; max-width: 320px; text-align: center; padding: 30px; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin: auto; display: flex; flex-direction: column; align-items: center;">
+        
+        <div id="confirm-icon" style="font-size: 3.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));">🎁</div>
+        
+        <h2 id="confirm-title" style="margin: 5px 0 10px 0; font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: -0.5px;">Confirmare</h2>
+        
+        <p id="confirm-desc" style="font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 20px;"></p>
+        
+        <div id="options-container" style="display: none; width: 100%; margin-bottom: 20px;">
+            <span class="pin-label" style="display: block; margin-bottom: 10px; font-size: 0.6rem; opacity: 0.8;">Alege varianta</span>
+            <div style="position: relative; width: 100%;">
+                <select id="confirm-select" style="width: 100%; padding: 12px; border-radius: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; font-family: inherit; font-weight: 600; appearance: none; -webkit-appearance: none; text-align: center;">
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; width: 100%; justify-content: center;">
+            <button class="btn-love" onclick="closeConfirm()" style="flex: 1; margin: 0; padding: 12px; font-size: 0.7rem; border-color: rgba(255,255,255,0.1);">ANULEAZĂ</button>
+            <button id="confirm-execute" class="btn-premium" style="flex: 1.3; margin: 0; padding: 12px; font-size: 0.7rem; background: var(--accent);">CONFIRMĂ</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- RADIO BUTON SMART -->
+<div id="radio-popup" 
+     onclick="toggleRadio()" 
+     style="background: transparent !important; border: none !important; cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent;">
+    
+    <div id="play-indicator" class="radio-off">
+        <svg id="p-play" viewBox="0 0 24 24" width="25"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+        <svg id="p-pause" viewBox="0 0 24 24" style="display:none;" width="25"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </div>
+</div>
+
+
+
+
+        <audio id="audio" src="https://sergiumusic.duckdns.org/hope"></audio>
+    </div>
+
+<!-- Caută acest bloc și înlocuiește valorile de font-size -->
+<div id="points-hud" onclick="openStreakModal()" style="gap: 20px; padding: 10px 20px; cursor: pointer;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 1.25rem;">🔥</span> <!-- Era 1rem -->
+            <span class="val" id="streak-val" style="font-size: 1.4rem;">--</span> <!-- Era 1.1rem -->
+        </div>
+        <div style="width: 1px; height: 20px; background: var(--glass-border);"></div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.25rem; filter: drop-shadow(0 0 3px var(--accent));">✨</span> <!-- Era 1rem -->
+            <span class="val" id="balance" style="font-size: 1.4rem;">--</span> <!-- Era 1.1rem -->
+        </div>
+    </div>
+</div>
+
+
+
+    <div class="app-container">
+<header style="text-align: center; margin-bottom: 20px;">
+    <h1 class="hope-title">Hope Store</h1>
+</header>
+
+
+
+<div class="glass-card search-container">
+    <!-- Iconița Lupa -->
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5; flex-shrink: 0;">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+
+<input type="text" id="search-input" placeholder="Caută un beneficiu..." 
+       style="flex: 1; background: transparent; border: none; color: white; outline: none; font-family: inherit; font-size: 0.9rem; height: 100%; padding: 0;"
+       oninput="handleSearch()"
+       onfocus="preventScroll(event)">
+
+
+    <!-- Butonul de Ștergere (X) -->
+    <button id="clear-search" onclick="clearSearch()" 
+            style="background: transparent; border: none; color: white; cursor: pointer; padding: 0; opacity: 0; transition: 0.3s; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    </button>
+</div>
+
+
+
+
+
+
+<!-- SECȚIUNE RECOMPENSE - ÎNLOCUIEȘTE TOT CE AI TRIMIS CU ASTA -->
+<div id="public-label" class="section-label">Public Rewards</div>
+<div id="public-section">
+    <div class="grid" id="public-grid"></div>
+<!-- Exemplu pentru secțiunea Public -->
+<button id="btn-more-public" class="btn-expand-luxury" style="display: none;" onclick="toggleExpand('public')">
+    <span>Vezi tot</span>
+    <div class="expand-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+</button>
+</div>
+
+<div id="private-label" class="section-label">Private Vault</div>
+<div id="private-section">
+    <div id="private-lock-overlay" class="locked-overlay" onclick="unlockPrivate()">
+        <!-- Elementul central: Scutul Romboidal -->
+        <div class="lock-icon-container">
+            <div class="hex-shield">
+                <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#7400b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <circle cx="12" cy="11" r="3"></circle>
+                    <path d="M12 14v4"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Textul de lux -->
+        <div class="lock-title-elite" style="text-align: center;">
+            <h2>PRIVATE VAULT </h2>
+            <div class="lock-badge">
+                <span style="margin-right: 5px;">🔒</span> RESTRICTED ACCESS
+            </div>
+        </div>
+        
+        <p style="margin-top: 25px; font-size: 0.7rem; opacity: 0.4; font-weight: 600; letter-spacing: 1px;">
+            ATINGE PENTRU AUTENTIFICARE
+        </p>
+    </div>
+    
+    <!-- Grid-ul tău rămâne la fel sub overlay -->
+    <div class="grid" id="private-grid" style="display: none;"></div>
+<!-- Exemplu pentru secțiunea Public -->
+<button id="btn-more-private" class="btn-expand-luxury" style="display: none;" onclick="toggleExpand('private')">
+    <span>Vezi tot</span>
+    <div class="expand-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+</button>
+</div>
+
+
+
+
+        <div class="section-label">Transaction History</div>
+        <div class="glass-card" style="padding: 10px 20px;">
+            <div id="history-list">
+                <p style="font-size: 0.8rem; opacity: 0.5; text-align: center;">Se încarcă istoricul...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// --- CONFIGURARE MOD FUNCTIONARE ---
+const USE_API = true; 
+// ------------------------------------
+
+const SUPABASE_URL = 'https://fndjrfieitieqzafhyzz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bHDKjiKAVHqW199ICw7i2g_O3olYMAr';
+
+// Inițializăm variabila cu null
+let _supabase = null;
+
+// Creăm clientul DOAR dacă USE_API este true
+if (USE_API) {
+    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+const USER_ID = 'iubita-mea';
+const PAROLA_SECRETA = "69";
+
+const MOCK_DATA = {
+    points: 15,
+    streak: 7, // Aici pui numărul de zile pe care vrei să-l simulezi
+    history: ["🔥 Masaj Spate (01.05.2026)", "🍕 Seară de Film (03.05.2026)"],
+    last_update: new Date().toISOString()
+};
+
+
+
+
+const MENIU_PUBLIC = [
+    // --- GRATUITE ---
+    { id: 101, titlu: "Kiss me!", desc: "Un set de pupici dulci, oricând ai nevoie de o doză de iubire.", icon: "💋", pret: 0 },
+    { id: 102, titlu: "Hug Time", desc: "Te cuprind și te încălzesc cu iubire.", icon: "🤗", pret: 0 },
+    { 
+        id: 103, 
+        titlu: "Băutură la alegere", 
+        desc: "Spune-mi ce poftești și îți prepar imediat ceva bun.", 
+        icon: "☕",
+        pret: 0,
+        options: ["Apă", "Ceai", "Cafea", "Suc", "Vin", "Capucino"] 
+    },
+    { id: 104, titlu: "Attention, mon chéri", desc: "Un hint să îți dau mai multă atenție și să las ceea ce fac dacă nu-i ceva cu adevărat important.", icon: "✨", pret: 0 },
+
+    // --- Relaxare și Casă ---
+    { 
+        id: 105, 
+        titlu: "Masaj", 
+        desc: "După o zi lungă, sau fără un motiv anume.", 
+        icon: "💆🏽‍♀️",
+        pret: 0,
+        options: ["Masaj Tălpi", "Masaj Capilar", "Masaj Spate"] 
+    },
+    { id: 3, titlu: "Mic Dejun", desc: "Omletă și cafea, servită la pat.", icon: "🍳", pret: 0 },
+    { id: 9, titlu: "Bucătar Duo", desc: "Alegem ceva de pe canalul meu de telegram cu rețete și pregătim.", icon: "🥗", pret: 0 },
+    { id: 11, titlu: "Fără Social Media", desc: "O seară întreagă fără telefoane, doar noi doi.", icon: "📵", pret: 0 },
+    { id: 12, titlu: "Mic Dejun de Duminică", desc: "Waffe cu sirop și fructe.", icon: "🥞", pret: 0 },
+    { id: 15, titlu: "Picnic în fața TV-ului", desc: "Gustări și atmosferă de cinema, mă ocup eu complet de organizare iar tu de alegerea filmului.", icon: "🧺", pret: 0 },
+
+    // --- Ieșiri și Activități ---
+    { id: 21, titlu: "Apus cu Gustări", desc: "Ieșim afară să vedem apusul cu ceva snack-uri.", icon: "🌅", pret: 0 },
+    { id: 25, titlu: "Duo la Cratiță", desc: "Facem ceva dulce împreună.", icon: "🧁", pret: 0 },
+    { id: 30, titlu: "Ziua Pupicilor", desc: "O zi în care te pup non-stop.", icon: "😘", pret: 0 },
+    { id: 31, titlu: "Escapadă Weekend", desc: "O plecare surpriză de 2 zile, mă ocup eu.", icon: "🎡", pret: 60 },
+    { id: 41, titlu: "Seară de Astronomie", desc: "Privim stelele de pe balcon, cu o păturică îmbrățișați.", icon: "🌌", pret: 0 },
+];
+
+
+const MENIU_PRIVAT = [
+    // --- GRATUITE ---
+    { id: 301, titlu: "Sex Ring", desc: "Fără credite, fără scuze.<br>Doar noi doi, acum.", icon: "🔥", pret: 0, special: true },
+
+    // --- Clasice & Senzuale ---
+    { id: 201, titlu: "Masaj Sensual", desc: "Te ung cu uleiuri pe tot corpul și te frământ până te înmoi de tot sub mâinile mele.", icon: "🧴", pret: 0 },
+    { id: 202, titlu: "Quickie Surprise", desc: "Te iau prin surprindere și te fut oriunde te prind, să-ți dau un șoc de plăcere.", icon: "⚡", pret: 0 },
+    { id: 203, titlu: "Lingerie Shopping", desc: "Îți alegi cea mai perversă lenjerie, eu sunt sponsorul, doar ca să am plăcerea să o rup de pe tine.", icon: "👙", pret: 0 },
+    { id: 204, titlu: "Fantezie Îndeplinită", desc: "Tu propui, eu execut. Sunt unealta ta pentru orice scenariu ai în cap.", icon: "💭", pret: 0 },
+    { id: 205, titlu: "Duș în Doi", desc: "Te spăl peste tot, te mângâi sub jetul de apă și te iau direct pe gresia udă.", icon: "🚿", pret: 0 },
+    { id: 206, titlu: "Joc de Rol", desc: "Devin cine vrei tu ca să-ți îndeplinesc orice scenariu pervers.", icon: "🎭", pret: 0 },
+    { id: 207, titlu: "Maraton Sărutări", desc: "Te sărut și te ating 10 minute în continuu pe tot corpul, până te ud de tot.", icon: "👄", pret: 0 },
+    { id: 208, titlu: "Blindfolded Fun", desc: "Te leg la ochi și fac ce vreau cu corpul tău, să nu știi de unde vine atingerea.", icon: "🙈", pret: 0 },
+    { id: 210, titlu: "Evadare de Lux", desc: "Închiriem un Airbnb exclusivist cu jacuzzi; o noapte întreagă în care ești prioritatea mea.", icon: "🧖🏼‍♀️", pret: 45 },
+    { id: 211, titlu: "Morning Delight", desc: "Te trezesc cu limba între picioare; nu te las până nu tremuri de orgasm.", icon: "👅", pret: 0 },
+    { id: 212, titlu: "Slow Sex Night", desc: "O noapte în care timpul stă în loc. Ne bucurăm de fiecare senzație prin mișcări lente.", icon: "🕯️", pret: 0 },
+    { id: 214, titlu: "Sânii și buzele", desc: "Te excit doar din gura mea și sânii tăi.", icon: "🍒", pret: 0 },
+
+    // --- Explorare & Perversiuni ---
+    { id: 215, titlu: "Dinner in the Dark", desc: "Te leg la ochi, te dezbrac și te hrănesc goală, restul e surpriză.", icon: "🌑", pret: 0 },
+    { id: 216, titlu: "Toy Control", desc: "Alegi o jucărie și mă obligi să o folosesc pe tine până urli de plăcere.", icon: "🛒", pret: 0 },
+    { id: 218, titlu: "Body Chocolate", desc: "Te acopăr cu ciocolată sau frișcă și te curăț integral cu limba.", icon: "🍫", pret: 0 },
+    { id: 219, titlu: "The 'Yes' Girl", desc: "Orice propunere erotică ai, eu o execut.", icon: "👑", pret: 0 },
+    { id: 220, titlu: "69 Position", desc: "Stau sub tine și te răsfăț cu limba până la extaz.", icon: "♋", pret: 0 },
+
+
+    // --- Hardcore & Explicit ---
+    { id: 221, titlu: "Preludiu Licker", desc: "Îți ling prietena 5 minute și apoi o lăsăm să se cunoască cu prietenul meu.", icon: "👅", pret: 0 },
+    { id: 223, titlu: "Double Penetration <br>Fantasy", desc: "Te fut cu o jucărie în același timp, să te simți plină.", icon: "👯‍♂️", pret: 0 },
+    { id: 224, titlu: "The Master's Mark", desc: "Îți las semne, mușcături și palme pe fund, să simți că m-ai aparținut.", icon: "🐾", pret: 0 },
+    { id: 225, titlu: "Dirty Face-Slapping", desc: "Te plesnesc peste față cu 🍌🍆 până când ești amețită de plăcere.", icon: "👋", pret: 0 },
+
+    // --- Sclavie & Supunere ---
+    { id: 226, titlu: "Sclavul de sub Birou", desc: "Stau în genunchi la picioarele tale și te ling în timp ce tu mă ignori.", icon: "🙇‍♂️", pret: 0 },
+    { id: 227, titlu: "Human Dildo", desc: "Mă transform în vibratorul tău. Tu te urci pe mine și mă folosești cum vrei.", icon: "🍆", pret: 0 },
+    { id: 228, titlu: "Pizd* Licker Non-Stop", desc: "Mă pui să te ling până îmi amorțește fața și tu ai terminat de 5 ori.", icon: "👅", pret: 0 },
+    { id: 230, titlu: "Body Marking", desc: "Ai voie să mă muști și să mă zgârii. Sunt al tău.", icon: "🦷", pret: 0 }
+];
+
+
+
+
+
+async function resetApp(event) {
+    if (event) {
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+    }
+
+    // Eliminăm focusul de pe orice input (închide tastatura pe mobil)
+    document.activeElement.blur();
+    
+    // Feedback vizual pe butonul de reset
+    const btn = document.getElementById('reset-circle');
+    if (btn) btn.classList.add('glow-active');
+
+    // 1. Resetăm stările de căutare și expansiune
+    searchTerm = "";
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = "";
+        // Resetăm și butonul X de la căutare
+        const clearBtn = document.getElementById('clear-search');
+        if (clearBtn) {
+            clearBtn.style.opacity = "0";
+            clearBtn.style.pointerEvents = "none";
+        }
+    }
+    
+    expanded.public = false;
+    expanded.private = false;
+
+    // 2. Blocăm Vault-ul Privat și forțăm CENTRAREA cu 'flex'
+    const overlay = document.getElementById('private-lock-overlay');
+    const privateGrid = document.getElementById('private-grid');
+    const btnMorePrivate = document.getElementById('btn-more-private');
+    const btnMorePublic = document.getElementById('btn-more-public');
+
+    if (overlay) {
+        // SCHIMBARE CRITICĂ: 'flex' în loc de 'block' pentru a nu se muta elementele la stânga
+        overlay.style.display = 'flex'; 
+    }
+    
+    if (privateGrid) {
+        privateGrid.style.display = 'none'; 
+    }
+    
+    // Ascundem butoanele "Vezi tot" pentru a reveni la starea compactă
+    if (btnMorePrivate) btnMorePrivate.style.display = 'none';
+    if (btnMorePublic) btnMorePublic.style.display = 'none';
+
+    // 3. Reîncărcăm datele (din API sau Mock)
+    await loadData();
+
+    // 4. Scroll lin către partea de sus a paginii
+    requestAnimationFrame(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // Eliminăm efectul de strălucire după 1 secundă
+    setTimeout(() => {
+        if (btn) btn.classList.remove('glow-active');
+    }, 1000);
+}
+
+
+
+
+
+
+
+let toastQueue = []; // Coada de așteptare pentru mesaje
+let isToastShowing = false; // Indicator dacă un toast este activ pe ecran
+
+function showToast(customIcon = "✨", customTitle = "Cerere Trimisă") {
+    // Adăugăm datele în coadă
+    toastQueue.push({ icon: customIcon, title: customTitle });
+    
+    // Încercăm să pornim procesarea cozii
+    processToastQueue();
+}
+
+function processToastQueue() {
+    // Dacă un toast rulează deja sau coada este goală, ieșim
+    if (isToastShowing || toastQueue.length === 0) return;
+
+    // Marcăm că începem afișarea
+    isToastShowing = true;
+    
+    // Extragem primul element din coadă
+    const current = toastQueue.shift();
+    
+    const toast = document.getElementById('toast-notification');
+    const iconElem = document.getElementById('island-icon');
+    const titleElem = document.getElementById('island-title');
+
+    // Setăm conținutul
+    iconElem.innerText = current.icon;
+    titleElem.innerText = current.title;
+
+    // Activăm animația
+    toast.classList.add('show');
+
+    // Feedback Haptic (opțional)
+    if (navigator.vibrate) {
+        navigator.vibrate([10, 30, 10]);
+    }
+
+    // Așteptăm să se termine durata de afișare (4 secunde)
+    // plus un mic delay pentru animația de dispariție (600ms)
+    setTimeout(() => {
+        toast.classList.remove('show');
+        
+        // Așteptăm să se termine animația de fade-out înainte de a-l afișa pe următorul
+        setTimeout(() => {
+            isToastShowing = false;
+            processToastQueue(); // Verificăm dacă mai sunt mesaje în coadă
+        }, 600); 
+
+    }, 4000);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let lastScrollPos = 0;
+
+function preventScroll(e) {
+    // Salvăm poziția actuală de scroll înainte ca browserul să o schimbe
+    lastScrollPos = window.scrollY || document.documentElement.scrollTop;
+    
+    // Folosim un timeout scurt pentru a anula scroll-ul automat al browserului
+    setTimeout(() => {
+        window.scrollTo(0, lastScrollPos);
+    }, 10);
+}
+
+
+
+function openStreakModal(isDailyUpdate = false, rewardType = "daily") {
+    const modal = document.getElementById('streak-modal');
+    if (modal) {
+        let currentStreak = 0;
+        
+        if (!USE_API) {
+            currentStreak = MOCK_DATA.streak;
+        } else {
+            const streakElem = document.getElementById('streak-val');
+            currentStreak = parseInt(streakElem.innerText) || 0;
+        }
+        
+        updateStreakVisuals(currentStreak);
+        
+        const subtitle = modal.querySelector('.streak-header-mini p');
+        
+        if (isDailyUpdate) {
+            if (rewardType === "bonus") {
+                // Mesaj special pentru pragurile 7, 30, 90, etc.
+                const bonusValue = STREAK_BONUSES.find(b => b.days === currentStreak)?.reward || 0;
+                subtitle.innerHTML = `🌟 PRAG ATINS! <span style="color: #ff4d6d;">+${bonusValue + 1} Credite</span> (Daily + Bonus)`;
+            } else {
+                // Mesaj standard
+                subtitle.innerHTML = 'Bună dimineața! <span style="color: #00d4ff;">+1 Credit Zilnic</span>';
+            }
+            subtitle.style.fontWeight = "800";
+        } else {
+            subtitle.innerText = 'Streak Activ';
+            subtitle.style.fontWeight = "normal";
+        }
+        
+        modal.style.display = 'flex';
+    }
+}
+
+
+
+
+function updateStreakVisuals(currentStreak) {
+    document.getElementById('streak-title-display').innerText = `${currentStreak} Days`;
+
+    const milestones = [7, 30, 90, 180, 365];
+    let totalPercent = 0;
+    let nextGoal = 365;
+    let foundNext = false;
+
+    // Calculăm procentul barei raportat la segmente (0-100%)
+    if (currentStreak <= 7) {
+        totalPercent = 0;
+    } else if (currentStreak <= 30) {
+        totalPercent = ((currentStreak - 7) / (30 - 7)) * 25;
+    } else if (currentStreak <= 90) {
+        totalPercent = 25 + ((currentStreak - 30) / (90 - 30)) * 25;
+    } else if (currentStreak <= 180) {
+        totalPercent = 50 + ((currentStreak - 90) / (180 - 90)) * 25;
+    } else if (currentStreak <= 365) {
+        totalPercent = 75 + ((currentStreak - 180) / (365 - 180)) * 25;
+    } else {
+        totalPercent = 100;
+    }
+
+    // LIMITARE STRICTĂ: Bara nu poate trece de 100% (centrul ultimei buline)
+    totalPercent = Math.min(Math.max(totalPercent, 0), 100);
+
+    // Aplicăm animația
+    setTimeout(() => {
+        const fill = document.getElementById('timeline-fill-v');
+        if (fill) fill.style.height = totalPercent + "%";
+    }, 200);
+
+    // Activăm vizual bulinele atinse
+    milestones.forEach(m => {
+        const dot = document.getElementById(`step-${m}`);
+        if (dot) {
+            if (currentStreak >= m) {
+                dot.classList.add('reached');
+            } else {
+                dot.classList.remove('reached');
+                if (!foundNext) { 
+                    nextGoal = m; 
+                    foundNext = true; 
+                }
+            }
+        }
+    });
+
+    const hint = document.getElementById('next-goal-hint');
+    
+    // Configurare mesaje pentru pragurile viitoare (Text curățat și iconițe)
+    const futureRewards = {
+        7:   "La pragul de <b>7 zile</b> primești un bonus de <b>+3 Credite</b>.",
+        30:  "La <b>30 de zile</b> deblocăm un Super Bonus de <b>+10 Credite</b>.",
+        90:  "La <b>90 de zile</b> primești un cadou special de <b>+15 Credite</b>.",
+        180: "La <b>180 de zile</b> primești un Grant Regal de <b>+25 Credite</b>.",
+        365: "La <b>un an complet</b> primești potul cel mare de <b>+50 Credite</b>."
+    };
+
+    if (currentStreak >= 365) {
+        hint.innerHTML = `
+            <div style="text-align: center; padding: 10px;">
+                <span style="color: #ff4d6d; font-weight: 800; font-size: 0.9rem;">🏆 NIVEL MAXIM ATINS</span>
+                <p style="margin: 5px 0 0; font-size: 0.75rem; opacity: 0.7;">Ai demonstrat o iubire infinită. ✨</p>
+            </div>`;
+    } else {
+        // Luăm mesajul corespunzător următorului prag găsit (nextGoal)
+        const nextMessage = futureRewards[nextGoal] || "Fiecare zi cu tine e un câștig! ✨";
+        const zileRamase = nextGoal - currentStreak;
+        
+        hint.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+                <!-- Mesaj Recompensă -->
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.9); line-height: 1.4; padding-left: 10px; border-left: 2px solid #00d4ff;">
+                    ${nextMessage}
+                </div>
+                
+                <!-- Badge Progres -->
+                <div style="background: rgba(0, 212, 255, 0.08); 
+                            padding: 10px 12px; 
+                            border-radius: 14px; 
+                            border: 1px solid rgba(0, 212, 255, 0.2);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            margin-top: 5px;">
+                    <span style="font-size: 1rem;">⏳</span>
+                    <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #00d4ff;">
+                        Mai ai <span style="font-size: 0.7rem; color: #fff;">${zileRamase} ${zileRamase === 1 ? 'zi' : 'zile'}</span> până la premiu
+                    </span>
+                </div>
+            </div>
+        `;
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+function closeStreakModal() {
+    const modal = document.getElementById('streak-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Închide modalul dacă dai click în afara conținutului
+window.onclick = function(event) {
+    const modal = document.getElementById('streak-modal');
+    if (event.target == modal) {
+        closeStreakModal();
+    }
+}
+
+
+// Opțional: Închidere la tasta Escape
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeStreakModal();
+});
+
+
+
+
+function toggleRadio() {
+    const audio = document.getElementById('audio');
+    const indicator = document.getElementById('play-indicator');
+    const playIcon = document.getElementById('p-play');
+    const pauseIcon = document.getElementById('p-pause');
+
+    if (audio.paused) {
+        // RESET & PLAY (Ca și cum ai intra acum pe pagină)
+        audio.currentTime = 0; 
+        audio.play();
+        
+        indicator.classList.remove('radio-off');
+        indicator.classList.add('radio-on');
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+    } else {
+        // STOP COMPLET & RESET
+        audio.pause();
+        audio.currentTime = 0; // Duce melodia la secunda zero
+        
+        // Opțional: Această linie "descarcă" piesa din memorie temporar
+        // pentru a simula reîncărcarea completă de la zero la următorul play
+        audio.load(); 
+
+        indicator.classList.remove('radio-on');
+        indicator.classList.add('radio-off');
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+    }
+}
+
+
+
+
+
+
+
+let currentPin = "";
+
+
+
+// 1. Funcția care închide modalul și ARATĂ butonul de reset
+function closeSecretModal() {
+    // Închidem fereastra de PIN
+    document.getElementById('custom-prompt').style.display = 'none';
+    
+    // Resetăm codul introdus (ca să nu rămână bulinele pline data viitoare)
+    currentPin = "";
+    updatePinDisplay();
+    
+    // FACEM BUTONUL ROZ SĂ REAPARĂ
+    toggleResetButton(true);
+}
+
+// 2. Funcția care se asigură că butonul primește clasa corectă
+function toggleResetButton(show) {
+    const resetBtn = document.getElementById('reset-circle');
+    if (!resetBtn) return;
+
+    if (show) {
+        resetBtn.classList.remove('hidden-reset');
+    } else {
+        resetBtn.classList.add('hidden-reset');
+    }
+}
+
+
+function unlockPrivate() {
+    currentPin = ""; 
+    updatePinDisplay();
+    document.getElementById('custom-prompt').style.display = 'block';
+    
+    // Ascundem butonul de reset (ID-ul corect: reset-circle)
+    toggleResetButton(false); 
+}
+
+
+
+function pressKey(num, e) {
+    if (e) e.preventDefault(); // Oprește orice lag de sistem
+    
+    if (currentPin.length < 4) {
+        currentPin += num;
+        updatePinDisplay();
+        
+        if (currentPin === PAROLA_SECRETA) {
+            setTimeout(unlockSuccess, 100);
+        } else if (currentPin.length === 4) {
+            const display = document.getElementById('pw-display');
+            display.style.borderColor = "#ff4d6d";
+            setTimeout(() => {
+                currentPin = "";
+                updatePinDisplay();
+                display.style.borderColor = "var(--locked)";
+            }, 400);
+        }
+    }
+}
+
+function clearKey(e) {
+    if (e) e.preventDefault();
+    currentPin = "";
+    updatePinDisplay();
+}
+
+function backspaceKey(e) {
+    if (e) e.preventDefault();
+    currentPin = currentPin.slice(0, -1);
+    updatePinDisplay();
+}
+
+
+function updatePinDisplay() {
+    const display = document.getElementById('pw-display');
+    if (currentPin.length === 0) {
+        display.innerHTML = '<span style="opacity: 0.3;">••••</span>';
+    } else {
+        // Generăm puncte pentru fiecare cifră introdusă
+        display.innerHTML = '<span class="filled">' + "•".repeat(currentPin.length) + '</span>';
+    }
+}
+
+function unlockSuccess() {
+    // 1. Închidem modalul de PIN și reactivăm butonul de reset
+    document.getElementById('custom-prompt').style.display = 'none';
+    toggleResetButton(true);
+
+    const overlay = document.getElementById('private-lock-overlay');
+    const privateGrid = document.getElementById('private-grid');
+    
+    // 2. Ascundem definitiv overlay-ul cu lacăt
+    if (overlay) {
+        overlay.style.setProperty('display', 'none', 'important');
+    }
+
+    // 3. Afișăm grid-ul cu beneficii private
+    if (privateGrid) {
+        privateGrid.style.setProperty('display', 'grid', 'important');
+        expanded.private = false; 
+        loadData(); // Re-randăm pentru a popula grid-ul
+    }
+
+    // 4. SCROLL CENTRAT CĂTRE PRIMUL CARD (SEX RING)
+    setTimeout(() => {
+        // Căutăm primul card din grid-ul privat
+        const firstCard = privateGrid.querySelector('.glass-card');
+        
+        if (firstCard) {
+            // Folosim scrollIntoView cu opțiunea 'center'
+            firstCard.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            // Efect vizual extra: o mică pulsație de confirmare
+            firstCard.style.transition = "all 0.5s ease";
+            firstCard.style.boxShadow = "0 0 30px var(--accent)";
+            setTimeout(() => {
+                firstCard.style.boxShadow = "";
+            }, 1000);
+        }
+    }, 100); // Delay-ul permite browserului să randeze grid-ul înainte de scroll
+}
+
+
+
+
+
+
+function toggleResetButton(show) {
+    const resetBtn = document.getElementById('reset-circle');
+    if (!resetBtn) return;
+
+    if (show) {
+        // Elimină clasa care dă opacity 0
+        resetBtn.classList.remove('hidden-reset');
+    } else {
+        // Adaugă clasa care ascunde butonul
+        resetBtn.classList.add('hidden-reset');
+    }
+}
+
+
+
+
+
+
+// Reținem dacă secțiunile sunt extinse sau nu
+let expanded = {
+    public: false,
+    private: false
+};
+
+function toggleExpand(section) {
+    expanded[section] = !expanded[section];
+    loadData(); // Re-randăm interfața pentru a aplica noua limită
+}
+
+
+// Variabilă globală pentru termenul de căutare
+let searchTerm = "";
+
+// Actualizăm handleSearch pentru a ară și butonul de ștergere
+function handleSearch() {
+    const input = document.getElementById('search-input');
+    const clearBtn = document.getElementById('clear-search');
+    
+    searchTerm = input.value.toLowerCase();
+    
+    // Arătăm/ascundem butonul X
+    if (searchTerm.length > 0) {
+        clearBtn.style.opacity = "0.5";
+        clearBtn.style.pointerEvents = "auto";
+    } else {
+        clearBtn.style.opacity = "0";
+        clearBtn.style.pointerEvents = "none";
+    }
+    
+    loadData();
+}
+
+function clearSearch() {
+    const input = document.getElementById('search-input');
+    input.value = ""; // Șterge textul
+    
+    handleSearch(); // Resetează grid-ul de beneficii
+    
+    // Aceasta este linia cheie:
+    input.blur(); // Elimină focusul și închide tastatura pe mobil
+}
+
+
+
+function getSortedItems(items, currentPoints) {
+    return [...items].sort((a, b) => {
+        // 1. Prioritate după disponibilitate (Permise vs Nepermise)
+        const canAffordA = currentPoints >= a.pret ? 1 : 0;
+        const canAffordB = currentPoints >= b.pret ? 1 : 0;
+
+        if (canAffordA !== canAffordB) {
+            return canAffordB - canAffordA; // Cele pe care și le permite stau sus
+        }
+
+        // 2. Dacă ambele sunt în aceeași stare, aplicăm logica de căutare (dacă există)
+        if (searchTerm) {
+            const scoreA = calculateScore(a, searchTerm);
+            const scoreB = calculateScore(b, searchTerm);
+            if (scoreA !== scoreB) return scoreB - scoreA;
+        }
+
+        // 3. Sortare secundară implicită (opțional: după preț crescător)
+        return a.pret - b.pret;
+    });
+}
+
+
+function calculateScore(item, term) {
+    let score = 0;
+    const title = item.titlu.toLowerCase();
+    const desc = item.desc.toLowerCase();
+
+    // Potrivire exactă în titlu (Prioritate maximă)
+    if (title.includes(term)) score += 100;
+    // Potrivire exactă în descriere
+    if (desc.includes(term)) score += 50;
+    
+    // Potriviri parțiale (cuvinte individuale)
+    const words = term.split(" ");
+    words.forEach(word => {
+        if (word.length < 2) return;
+        if (title.includes(word)) score += 10;
+        if (desc.includes(word)) score += 5;
+    });
+
+    return score;
+}
+
+
+const STREAK_BONUSES = [
+    { days: 7, reward: 3 },
+    { days: 30, reward: 10 },
+    { days: 90, reward: 15 },
+    { days: 180, reward: 25 },
+    { days: 365, reward: 50 }
+];
+
+
+async function loadData() {
+    let data;
+    let showStreakAtStart = false;
+    let rewardType = "daily";
+
+    // Mod de testare (Mock)
+    if (!USE_API) {
+        data = MOCK_DATA;
+        renderUI(data);
+        return true; // Confirmăm finalizarea
+    }
+
+    // Preluare date din Supabase
+    let { data: dbData, error } = await _supabase
+        .from('users_data')
+        .select('*')
+        .eq('id', USER_ID)
+        .single();
+
+    if (error) {
+        console.error("Eroare Supabase:", error);
+        return false;
+    }
+    
+    data = dbData;
+    const acum = new Date();
+    const aziString = acum.toISOString().split('T')[0];
+
+    // Logica de Streak & Update puncte zilnice
+    if (!data.last_update) {
+        showStreakAtStart = true;
+        const newPoints = (data.points || 0) + 1;
+        await _supabase
+            .from('users_data')
+            .update({ last_update: acum.toISOString(), streak: 1, points: newPoints })
+            .eq('id', USER_ID);
+        data.points = newPoints;
+        data.streak = 1;
+    } else {
+        const ultimaDataString = new Date(data.last_update).toISOString().split('T')[0];
+        if (aziString !== ultimaDataString) {
+            showStreakAtStart = true;
+            const dataAzi = new Date(aziString);
+            const dataUltima = new Date(ultimaDataString);
+            const diffInDays = Math.round((dataAzi - dataUltima) / (1000 * 60 * 60 * 24));
+
+            let noulStreak = (diffInDays === 1) ? (data.streak || 0) + 1 : 1;
+            let puncteDeAdaugat = 1; 
+
+            const bonusGasit = STREAK_BONUSES.find(b => b.days === noulStreak);
+            if (bonusGasit) {
+                puncteDeAdaugat += bonusGasit.reward;
+                rewardType = "bonus";
+            }
+
+            const newPoints = (data.points || 0) + puncteDeAdaugat;
+            
+            await _supabase
+                .from('users_data')
+                .update({ 
+                    points: newPoints, 
+                    last_update: acum.toISOString(),
+                    streak: noulStreak
+                })
+                .eq('id', USER_ID);
+            
+            data.points = newPoints;
+            data.streak = noulStreak;
+        }
+    }
+
+    // Randăm interfața
+    renderUI(data);
+
+    // Declanșăm modalul de streak dacă e cazul
+    if (showStreakAtStart) {
+        setTimeout(() => {
+            openStreakModal(true, rewardType); 
+        }, 1000);
+    }
+
+    return true; // Această linie este crucială pentru resetApp
+}
+
+
+
+
+
+
+
+
+
+function renderUI(userData) {
+    const balanceElem = document.getElementById('balance');
+    const streakElem = document.getElementById('streak-val');
+    if (balanceElem) balanceElem.innerText = userData.points;
+    if (streakElem) streakElem.innerText = userData.streak || 0;
+
+    const privateGrid = document.getElementById('private-grid');
+    const isPrivateUnlocked = privateGrid && privateGrid.style.display === 'grid';
+    
+    const publicLabel = document.getElementById('public-label');
+    const privateLabel = document.getElementById('private-label');
+    const privateSection = document.getElementById('private-section');
+
+    if (searchTerm.length > 0) {
+        publicLabel.innerText = "Rezultate Căutare";
+        privateLabel.style.display = "none";
+        privateSection.style.display = "none";
+
+        let combinedMenu = [...MENIU_PUBLIC];
+        if (isPrivateUnlocked) {
+            combinedMenu = [...combinedMenu, ...MENIU_PRIVAT];
+        }
+
+        // Aplicăm filtrarea ȘI sortarea inteligentă aici
+        const filteredItems = getSortedItems(combinedMenu, userData.points).filter(item => 
+            item.titlu.toLowerCase().includes(searchTerm) || 
+            item.desc.toLowerCase().includes(searchTerm)
+        );
+
+        renderGrid('public-grid', filteredItems, userData.points);
+    } else {
+        publicLabel.innerText = "Public Rewards";
+        privateLabel.style.display = "block";
+        privateSection.style.display = "block";
+
+        // Sortăm listele separat înainte de randare
+        const sortedPublic = getSortedItems(MENIU_PUBLIC, userData.points);
+        renderGrid('public-grid', sortedPublic, userData.points);
+
+        if (isPrivateUnlocked) {
+            const sortedPrivate = getSortedItems(MENIU_PRIVAT, userData.points);
+            renderGrid('private-grid', sortedPrivate, userData.points);
+        }
+    }
+
+    renderHistory(userData, isPrivateUnlocked);
+}
+
+
+function renderHistory(userData, isPrivateUnlocked) {
+    const historyContainer = document.getElementById('history-list');
+    
+    // Limita de caractere pentru afișare
+    const limitaCaractere = 19; 
+
+    if (userData.history && userData.history.length > 0) {
+        historyContainer.innerHTML = userData.history.map(h => {
+            const lastParenIndex = h.lastIndexOf('(');
+            const dataTranzactie = lastParenIndex !== -1 ? h.substring(lastParenIndex + 1).replace(')', '') : '--.--';
+            let fullText = lastParenIndex !== -1 ? h.substring(0, lastParenIndex).trim() : h;
+            
+            const chars = Array.from(fullText);
+            const icon = chars[0];
+            let textOnly = chars.slice(1).join('').trim();
+
+            // Păstrăm textul curat pentru comparație înainte de a pune "..."
+            const textToCompare = textOnly.replace('...', '').trim();
+
+            // Scurtăm textul pentru layout
+            if (textOnly.length > limitaCaractere) {
+                textOnly = textOnly.substring(0, limitaCaractere) + "...";
+            }
+
+            // FUNCȚIE DE NORMALIZARE: Elimină emoji și spații extra pentru o comparare precisă
+            const normalize = (str) => {
+                return str.toLowerCase()
+                    .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
+                    .trim();
+            };
+
+            // Verificăm dacă beneficiul aparține seifului privat
+            const estePrivat = MENIU_PRIVAT.some(item => {
+                const titluMeniuCurat = normalize(item.titlu);
+                const textIstoricCurat = normalize(textToCompare);
+                return titluMeniuCurat.includes(textIstoricCurat) || textIstoricCurat.includes(titluMeniuCurat);
+            });
+
+            const trebuieProtejat = estePrivat && !isPrivateUnlocked;
+
+            return `
+                <div class="history-item ${trebuieProtejat ? 'is-private-locked' : ''}">
+                    <div class="h-content">
+                        <div class="h-icon">${trebuieProtejat ? '🔒' : icon}</div>
+                        <div class="h-info">
+                            <span class="h-name ${trebuieProtejat ? 'text-locked' : ''}" title="${chars.slice(1).join('').trim()}">
+                                ${trebuieProtejat ? "Conținut Privat" : textOnly}
+                            </span>
+                            <span class="h-time">Tranzacție Confirmată</span>
+                        </div>
+                    </div>
+                    <div class="h-date">
+                        <span class="h-day">${dataTranzactie}</span>
+                    </div>
+                </div>`;
+        }).join('');
+    } else {
+        historyContainer.innerHTML = `<div style="text-align: center; padding: 30px 0; opacity: 0.3;"><p style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">Nicio activitate înregistrată</p></div>`;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function renderGrid(containerId, items, currentPoints) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const sectionType = containerId.split('-')[0]; // 'public' sau 'private'
+    const isSearching = searchTerm.length > 0;
+    
+    // Decidem câte iteme afișăm (toate dacă e căutare/extins, altfel primele 2)
+    const isExpanded = expanded[sectionType] || isSearching;
+    const itemsToShow = isExpanded ? items : items.slice(0, 2);
+    
+    container.innerHTML = itemsToShow.map(item => {
+        const isFree = item.pret === 0;
+        const isSpecial = item.special === true;
+        const optionsJson = item.options ? JSON.stringify(item.options).replace(/"/g, '&quot;') : 'null';
+        const itemIcon = item.icon || "✨";
+        
+        // --- LOGICA PENTRU CREDITE ---
+        const canAfford = currentPoints >= item.pret;
+        const diff = item.pret - currentPoints;
+        
+        // Textul de pe buton se schimbă dinamic
+        let buttonText = "";
+        if (canAfford) {
+            buttonText = isSpecial ? 'Te vreau acum 🔥' : (isFree ? 'Trimite dorința ✨' : 'Folosește Credite');
+        } else {
+            buttonText = `Lipsesc ${diff} Credite ⚡`;
+        }
+
+        // Randăm price-tag-ul DOAR dacă prețul NU este 0
+        const priceBadge = !isFree 
+            ? `<span class="price-tag ${!canAfford ? 'too-expensive' : ''}">${item.pret} CR</span>` 
+            : ""; 
+        
+        const specialStyle = isSpecial ? `
+            background: linear-gradient(145deg, rgba(255, 77, 109, 0.1), rgba(116, 0, 184, 0.1));
+            border-color: var(--accent);
+            animation: pulse-special 2s infinite;
+        ` : '';
+
+        return `
+            <div class="glass-card" style="${specialStyle}">
+                <div class="card-header-row">
+                    <div class="c-icon">${itemIcon}</div>
+                    <div class="c-body">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                            <h3 style="margin:0; font-size:0.98rem; font-weight:700; line-height:1.2; flex: 1;">${item.titlu}</h3>
+                            ${priceBadge}
+                        </div>
+                        <p style="margin: 4px 0 0 0; font-size:0.8rem; opacity:0.5; line-height:1.4;">${item.desc}</p>
+                    </div>
+                </div>
+                
+                <button class="${isFree ? 'btn-love' : 'btn-premium'}" 
+                    ${!canAfford ? 'disabled' : ''} 
+                    onclick="buy('${item.titlu.replace(/'/g, "\\'")}', ${item.pret}, ${optionsJson}, '${itemIcon}')"
+                    style="${!canAfford ? 'cursor: not-allowed; opacity: 0.5; filter: grayscale(1);' : ''}">
+                    ${buttonText}
+                </button>
+            </div>
+        `;
+    }).join('');
+
+    // Gestionare buton "Vezi tot"
+    const btnMore = document.getElementById(`btn-more-${sectionType}`);
+    if (btnMore) {
+        if (isSearching || items.length <= 2) {
+            btnMore.style.display = 'none';
+        } else {
+            btnMore.style.display = 'flex';
+            const hiddenCount = items.length - 2;
+            const btnText = btnMore.querySelector('span');
+            
+            if (isExpanded) {
+                btnMore.classList.add('active');
+                if (btnText) btnText.innerText = "Restrânge";
+            } else {
+                btnMore.classList.remove('active');
+                if (btnText) {
+                    btnText.innerHTML = `Vezi tot <small class="expand-count">+${hiddenCount}</small>`;
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let currentPurchaseData = null;
+
+function showConfirmModal({ title, price, options, emoji, onConfirm }) {
+    const modal = document.getElementById('confirm-modal');
+    const titleElem = document.getElementById('confirm-title');
+    const descElem = document.getElementById('confirm-desc');
+    const iconElem = document.getElementById('confirm-icon');
+    const optionsCont = document.getElementById('options-container');
+    const selectElem = document.getElementById('confirm-select');
+    const executeBtn = document.getElementById('confirm-execute');
+
+    // Curățăm titlul de emoji pentru afișare
+    const cleanTitle = title.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+    
+    titleElem.innerText = cleanTitle;
+    
+    // Textul cerut de tine
+    descElem.innerHTML = price === 0 
+        ? "Acest beneficiu este <b>gratuit</b>.<br>Îl dorești acum?" 
+        : `Vrei să folosești <b>${price} credite</b> pentru acest beneficiu?`;
+    
+    iconElem.innerText = emoji;
+    
+    if (options && options.length > 0) {
+        optionsCont.style.display = 'block';
+        selectElem.innerHTML = options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+    } else {
+        optionsCont.style.display = 'none';
+    }
+
+    modal.style.setProperty('display', 'flex', 'important');
+
+    executeBtn.onclick = () => {
+        let finalTitle = title;
+        if (options && options.length > 0) {
+            finalTitle = `${title} (${selectElem.value})`;
+        }
+        closeConfirm();
+        onConfirm(finalTitle);
+    };
+}
+
+
+
+
+
+function closeConfirm() {
+    const modal = document.getElementById('confirm-modal');
+    // Ascundem modalul complet
+    modal.style.setProperty('display', 'none', 'important');
+}
+
+
+async function buy(title, price, options = null, emoji = "🎁") {
+    const itemInfo = [...MENIU_PUBLIC, ...MENIU_PRIVAT].find(i => i.titlu === title);
+    const itemIcon = itemInfo && itemInfo.icon ? itemInfo.icon : "✨";
+
+    // Curățăm titlul pentru istoric și mesaje
+    const titleWithoutEmoji = title.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+
+    let descriere = itemInfo ? itemInfo.desc : "Fără descriere";
+    descriere = descriere.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>?/gm, '');
+
+    showConfirmModal({
+        title: title,
+        price: price,
+        options: options,
+        emoji: emoji,
+        onConfirm: async (finalTitleWithOption) => {
+            // Mod de testare (Mock)
+            if (!USE_API) {
+// În interiorul funcției buy, după trimiterea pe Telegram:
+showToast(itemIcon, titleWithoutEmoji);
+                console.log(`[MOD TESTARE] Achiziție: ${finalTitleWithOption}`);
+                return;
+            }
+
+            try {
+                // 1. Preluăm datele actuale ale utilizatorului
+                let { data, error: fetchError } = await _supabase
+                    .from('users_data')
+                    .select('*')
+                    .eq('id', USER_ID)
+                    .single();
+
+                if (fetchError) throw fetchError;
+
+                // 2. Verificăm dacă are destule credite
+                if (data.points >= price) {
+                    const newPoints = data.points - price;
+                    const oldHistory = data.history || []; 
+                    
+                    const optionSelected = finalTitleWithOption.includes('(') ? 
+                                           finalTitleWithOption.substring(finalTitleWithOption.lastIndexOf('(')) : '';
+                    
+                    const historyEntry = `${itemIcon} ${titleWithoutEmoji} ${optionSelected} (${new Date().toLocaleDateString('ro-RO')})`;
+                    const newHistory = [historyEntry, ...oldHistory];
+
+                    // 3. Actualizăm baza de date
+                    const { error: updateError } = await _supabase
+                        .from('users_data')
+                        .update({ 
+                            points: newPoints, 
+                            history: newHistory.slice(0, 8) 
+                        })
+                        .eq('id', USER_ID);
+
+                    if (updateError) throw updateError;
+
+                    // 4. Trimitere Notificări către Telegram
+                    const botToken = "8665700807:AAGUePmZoK7Oo83QdFPJWUmpv-EjOMG9A-A";
+                    const chatId = "976748886";
+
+                    // Mesaj 1: Separator vizual
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: chatId, text: "▫️  ⎯⎯⎯⎯⎯⎯⎯⎯⎯  ▫️" })
+                    });
+
+                    // Mesaj 2: Detalii beneficiu
+                    const mesaj = `${itemIcon}  *${titleWithoutEmoji} ${optionSelected}*\n` +
+                                 `📝 _${descriere}_\n\n` +
+                                 `💰 *Cost:* ${price} credite\n` + 
+                                 `✨ *Balanță nouă:* ${newPoints} credite`;
+
+                    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            chat_id: chatId, 
+                            text: mesaj, 
+                            parse_mode: "Markdown" 
+                        })
+                    });
+
+                    // 5. FEEDBACK VIZUAL PE ECRAN
+showToast(itemIcon, titleWithoutEmoji);
+
+                    // 6. Refresh date interfață
+                    loadData();
+                } else {
+                    alert("Nu ai destule credite! ⚡");
+                }
+            } catch (err) {
+                console.error("Eroare la procesarea achiziției:", err);
+                alert("A apărut o eroare. Încearcă din nou.");
+            }
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        loadData();
+        
+       
+        
+    </script>
+</body>
+</html>
