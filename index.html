@@ -2218,7 +2218,7 @@ async function loadData() {
 
     // Preluare date din Supabase
     let { data: dbData, error } = await _supabase
-        .from('users_data')
+        .from('hopestore_data')
         .select('*')
         .eq('id', USER_ID)
         .single();
@@ -2237,7 +2237,7 @@ async function loadData() {
         showStreakAtStart = true;
         const newPoints = (data.points || 0) + 1;
         await _supabase
-            .from('users_data')
+            .from('hopestore_data')
             .update({ last_update: acum.toISOString(), streak: 1, points: newPoints })
             .eq('id', USER_ID);
         data.points = newPoints;
@@ -2262,7 +2262,7 @@ async function loadData() {
             const newPoints = (data.points || 0) + puncteDeAdaugat;
             
             await _supabase
-                .from('users_data')
+                .from('hopestore_data')
                 .update({ 
                     points: newPoints, 
                     last_update: acum.toISOString(),
@@ -2598,7 +2598,7 @@ showToast(itemIcon, titleWithoutEmoji);
             try {
                 // 1. Preluăm datele actuale ale utilizatorului
                 let { data, error: fetchError } = await _supabase
-                    .from('users_data')
+                    .from('hopestore_data')
                     .select('*')
                     .eq('id', USER_ID)
                     .single();
@@ -2618,7 +2618,7 @@ showToast(itemIcon, titleWithoutEmoji);
 
                     // 3. Actualizăm baza de date
                     const { error: updateError } = await _supabase
-                        .from('users_data')
+                        .from('hopestore_data')
                         .update({ 
                             points: newPoints, 
                             history: newHistory.slice(0, 8) 
